@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:#08090a;-webkit-font-smoothing:antialiased;}
+input,textarea,button,select{font-family:inherit;}
+textarea{resize:vertical;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--hairline-strong,#34343a);border-radius:99px;border:2px solid transparent;background-clip:content-box;}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-tertiary,#62666d);background-clip:content-box;}
+::-webkit-scrollbar-track{background:transparent;}
+</style>
+</helmet>
+<div style="{{ shellStyle }}">
+  <aside style="width:248px;flex:0 0 248px;border-right:1px solid var(--hairline);display:flex;flex-direction:column;height:100vh;background:var(--sidebar-bg);">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 14px 10px;">
+      <div style="width:26px;height:26px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex:0 0 auto;"><svg width="17" height="17" viewBox="0 0 28 28"><path d="M9 8.5h10M9 14h10M9 19.5h6" stroke="#fff" stroke-width="2.1" stroke-linecap="round"></path></svg></div>
+      <div style="line-height:1.1;">
+        <div style="font-size:14.5px;font-weight:700;letter-spacing:-0.03em;color:var(--ink);">CapturePlan</div>
+        <div style="font-size:11px;color:var(--ink-tertiary);">X-ray Data Lab</div>
+      </div>
+    </div>
+    <div style="padding:4px 12px 10px;">
+      <button onClick="{{ startCreate }}" style="{{ quickAddStyle }}" style-hover="{{ quickAddHover }}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        <span>新規作成</span>
+      </button>
+    </div>
+    <nav style="padding:0 8px;overflow-y:auto;flex:1;">
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <button onClick="{{ goList }}" style="{{ navListStyle }}" style-hover="{{ navHover }}">
+          <span style="{{ navListIconColor }}display:flex;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg></span>
+          <span style="flex:1;">データ取り要項</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-tertiary);">{{ planCount }}</span>
+        </button>
+      </div>
+    </nav>
+    <div style="padding:10px;border-top:1px solid var(--hairline);display:flex;align-items:center;gap:6px;">
+      <button onClick="{{ goSettings }}" style="{{ settingsBtnStyle }}" style-hover="{{ settingsBtnHover }}">
+        <span style="{{ navSettingsIconColor }}display:flex;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg></span>
+        <span style="flex:1;text-align:left;">設定</span>
+      </button>
+      <button onClick="{{ toggleTheme }}" title="{{ themeTitle }}" style="{{ themeBtnStyle }}" style-hover="{{ themeBtnHover }}">{{ themeIcon }}</button>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--canvas);">
+
+    <sc-if value="{{ showTopbar }}" hint-placeholder-val="{{ true }}">
+    <div style="height:56px;flex:0 0 auto;border-bottom:1px solid var(--hairline);display:flex;align-items:center;gap:12px;padding:0 24px;background:var(--canvas);">
+      <span style="{{ topbarIconColor }}display:flex;flex:0 0 auto;">{{ topbarIcon }}</span>
+      <sc-for list="{{ crumbs }}" as="cr" hint-placeholder-count="1">
+        <sc-if value="{{ cr.chevron }}" hint-placeholder-val="{{ true }}"><span style="color:var(--ink-tertiary);display:flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span></sc-if>
+        <span onClick="{{ cr.onClick }}" style="{{ cr.style }}">{{ cr.label }}</span>
+      </sc-for>
+      <div style="flex:1;"></div>
+      <sc-if value="{{ hasTopbarAction }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ topbarAction }}" style="{{ topbarActionStyle }}" style-hover="{{ topbarActionHover }}"><span style="color:var(--ink-subtle);display:flex;">{{ topbarActionIcon }}</span><span>{{ topbarActionLabel }}</span></button>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="要項一覧" style="flex:1;overflow:auto;">
+      <div style="max-width:1100px;margin:0 auto;padding:40px 48px 96px;">
+        <p style="margin:0 0 22px;font-size:14px;color:var(--ink-subtle);line-height:1.5;max-width:620px;">撮像条件の組み合わせと進捗を、要項ごとに管理します。表に並ぶ行はすべて撮像対象です。</p>
+        <div style="{{ sCard }}overflow:hidden;">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 132px 188px 60px;gap:16px;padding:13px 24px;border-bottom:1px solid var(--hairline);font-size:11px;font-weight:600;letter-spacing:0.05em;color:var(--ink-tertiary);white-space:nowrap;">
+            <span>計画名</span><span>更新</span><span>進捗</span><span style="text-align:right;">要確認</span>
+          </div>
+          <sc-for list="{{ plansView }}" as="p" hint-placeholder-count="3">
+            <div onClick="{{ p.onOpen }}" style="display:grid;grid-template-columns:minmax(0,1fr) 132px 188px 60px;gap:16px;align-items:center;padding:18px 24px;border-bottom:1px solid var(--hairline);cursor:pointer;" style-hover="{{ rowHover }}">
+              <div style="min-width:0;">
+                <div style="font-size:15px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.name }}</div>
+                <div style="font-size:12px;color:var(--ink-subtle);margin-top:4px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">作成 {{ p.createdLabel }}</div>
+              </div>
+              <div style="font-size:13px;color:var(--ink-muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;font-size:12px;">{{ p.updatedLabel }}</div>
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+                  <span style="font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--ink-muted);">{{ p.doneCount }} / {{ p.totalCount }}</span>
+                  <span style="font-size:12px;font-weight:600;color:var(--ink);">{{ p.pctLabel }}</span>
+                </div>
+                <div style="height:6px;background:var(--surface-3);border-radius:9999px;overflow:hidden;">
+                  <div style="height:100%;border-radius:9999px;background:var(--st-done);width:{{ p.pctNum }}%;"></div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;">
+                <sc-if value="{{ p.hasCheck }}" hint-placeholder-val="{{ true }}">
+                  <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:9999px;background:var(--st-check-bg);color:var(--st-check);font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;"><span style="width:6px;height:6px;border-radius:50%;background:var(--st-check);"></span>{{ p.checkCount }}</span>
+                </sc-if>
+                <sc-if value="{{ p.noCheck }}" hint-placeholder-val="{{ true }}">
+                  <span style="font-size:13px;color:var(--ink-tertiary);">—</span>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isCreate }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="要項作成" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:22px 48px;border-bottom:1px solid var(--hairline);display:flex;align-items:center;justify-content:space-between;gap:20px;flex:0 0 auto;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <button onClick="{{ cancelCreate }}" style="{{ sGhost }}" style-hover="{{ sGhostHover }}">← 一覧へ</button>
+          <div style="width:1px;height:18px;background:var(--hairline);"></div>
+          <span style="font-size:15px;font-weight:600;color:var(--ink);">データ取り要項を作成</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <sc-for list="{{ stepsView }}" as="s" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="{{ s.dotStyle }}">{{ s.num }}</span>
+              <span style="font-size:13px;font-weight:500;color:{{ s.color }};">{{ s.label }}</span>
+              <span style="{{ s.barStyle }}"></span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex:1;overflow:auto;">
+
+        <sc-if value="{{ step1 }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:680px;margin:0 auto;padding:48px;">
+          <h2 style="margin:0 0 6px;font-size:26px;font-weight:600;letter-spacing:-0.02em;color:var(--ink);">基本情報</h2>
+          <p style="margin:0 0 32px;font-size:15px;color:var(--ink-subtle);">この要項を識別する計画名と、作業上の注意事項を入力します。</p>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--ink-muted);margin-bottom:8px;">計画名 <span style="color:var(--primary);">*</span></label>
+          <input value="{{ draftName }}" onInput="{{ onDraftName }}" placeholder="例：基板はんだ接合部 学習データ 第2弾" style="{{ sInput }}" style-focus="{{ sInputFocus }}">
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--ink-muted);margin:26px 0 8px;">注意事項 <span style="font-weight:400;color:var(--ink-tertiary);">（任意）</span></label>
+          <textarea value="{{ draftNote }}" onInput="{{ onDraftNote }}" placeholder="作業上の注意、確認事項、依頼内容などを記入" style="{{ sTextarea }}" style-focus="{{ sInputFocus }}"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:34px;">
+            <button onClick="{{ goStep2 }}" style="{{ step1NextStyle }}" style-hover="{{ sBtnPrimaryHover }}">条件・水準を設定 →</button>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ step2 }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:1080px;margin:0 auto;padding:40px 48px 120px;">
+          <h2 style="margin:0 0 6px;font-size:26px;font-weight:600;letter-spacing:-0.02em;color:var(--ink);">条件・水準の設定</h2>
+          <p style="margin:0 0 28px;font-size:15px;color:var(--ink-subtle);">使用する条件項目（因子）を選び、それぞれの水準を入力します。投影枚数・露光時間は見積時間の算出に使われます。</p>
+          <div style="display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start;">
+            <div style="{{ sCard }}padding:8px;position:sticky;top:0;">
+              <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;color:var(--ink-tertiary);padding:10px 12px 8px;">条件項目を選択</div>
+              <sc-for list="{{ availableItems }}" as="a" hint-placeholder-count="6">
+                <button onClick="{{ a.onToggle }}" style="{{ a.style }}" style-hover="{{ availHover }}">
+                  <span style="{{ a.boxStyle }}">{{ a.check }}</span>
+                  <span style="display:flex;flex-direction:column;line-height:1.2;text-align:left;min-width:0;">
+                    <span style="font-size:14px;font-weight:500;">{{ a.name }}</span>
+                    <span style="font-size:11px;color:var(--ink-subtle);">{{ a.typeLabel }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <sc-if value="{{ noFactors }}" hint-placeholder-val="{{ true }}">
+                <div style="{{ sCard }}padding:48px;text-align:center;color:var(--ink-subtle);font-size:14px;">左の一覧から条件項目を選択してください。</div>
+              </sc-if>
+              <sc-for list="{{ selectedFactors }}" as="f" hint-placeholder-count="3">
+                <div style="{{ sCard }}padding:20px 22px;">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">
+                    <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+                      <span style="font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;">{{ f.name }}</span>
+                      <span style="font-size:12px;color:var(--ink-subtle);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ f.hint }}</span>
+                    </div>
+                    <span style="font-size:12px;color:var(--ink-subtle);font-family:'JetBrains Mono',monospace;white-space:nowrap;flex:0 0 auto;padding-top:2px;">{{ f.countLabel }}</span>
+                  </div>
+                  <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                      <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="4">
+                        <button onClick="{{ o.onToggle }}" style="{{ o.style }}">{{ o.label }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ f.isValue }}" hint-placeholder-val="{{ true }}">
+                    <div>
+                      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+                        <sc-for list="{{ f.chips }}" as="c" hint-placeholder-count="2">
+                          <span style="display:inline-flex;align-items:center;gap:7px;padding:6px 8px 6px 12px;border-radius:8px;background:var(--surface-2);border:1px solid var(--hairline-strong);font-size:13px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--ink);">{{ c.label }}<button onClick="{{ c.onRemove }}" style="border:none;background:transparent;color:var(--ink-subtle);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;">✕</button></span>
+                        </sc-for>
+                        <sc-if value="{{ f.noChips }}" hint-placeholder-val="{{ true }}">
+                          <span style="font-size:13px;color:var(--ink-tertiary);padding:6px 0;">水準が未入力です</span>
+                        </sc-if>
+                      </div>
+                      <div style="display:flex;gap:8px;align-items:flex-start;">
+                        <input value="{{ f.inputValue }}" onInput="{{ f.onInput }}" onKeyDown="{{ f.onKey }}" placeholder="{{ f.placeholder }}" style="{{ f.inputStyle }}" style-focus="{{ sInputFocus }}">
+                        <button onClick="{{ f.onAdd }}" style="{{ sBtnSecondary }}" style-hover="{{ sBtnSecondaryHover }}">追加</button>
+                      </div>
+                      <sc-if value="{{ f.hasErr }}" hint-placeholder-val="{{ true }}">
+                        <div style="font-size:12px;color:#e5534b;margin-top:8px;">{{ f.err }}</div>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:262px;right:0;bottom:0;border-top:1px solid var(--hairline);background:var(--surface-1);padding:16px 48px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:baseline;gap:10px;">
+            <span style="font-size:13px;color:var(--ink-subtle);">生成される組み合わせ</span>
+            <span style="font-size:24px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--ink);">{{ comboCount }}</span>
+            <span style="font-size:13px;color:var(--ink-subtle);">行</span>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button onClick="{{ goStep1 }}" style="{{ sBtnSecondary }}" style-hover="{{ sBtnSecondaryHover }}">← 戻る</button>
+            <button onClick="{{ goStep3 }}" style="{{ step2NextStyle }}" style-hover="{{ sBtnPrimaryHover }}">確認へ →</button>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ step3 }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:760px;margin:0 auto;padding:48px;">
+          <h2 style="margin:0 0 6px;font-size:26px;font-weight:600;letter-spacing:-0.02em;color:var(--ink);">確認して生成</h2>
+          <p style="margin:0 0 28px;font-size:15px;color:var(--ink-subtle);">内容を確認し、条件組み合わせ表を生成します。生成後も不要な行は削除できます。</p>
+          <div style="{{ sCard }}padding:26px;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;color:var(--ink-tertiary);margin-bottom:6px;">計画名</div>
+            <div style="font-size:18px;font-weight:600;color:var(--ink);margin-bottom:18px;">{{ draftNameOr }}</div>
+            <sc-if value="{{ hasNote }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;color:var(--ink-tertiary);margin-bottom:6px;">注意事項</div>
+              <div style="font-size:14px;color:var(--ink-muted);line-height:1.6;white-space:pre-wrap;">{{ draftNote }}</div>
+            </sc-if>
+          </div>
+          <div style="{{ sCard }}padding:8px 22px;margin-bottom:24px;">
+            <sc-for list="{{ summaryFactors }}" as="f" hint-placeholder-count="3">
+              <div style="display:flex;align-items:flex-start;gap:16px;padding:14px 0;border-bottom:1px solid var(--hairline);">
+                <span style="font-size:14px;font-weight:600;color:var(--ink);width:120px;flex:0 0 auto;">{{ f.name }}</span>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  <sc-for list="{{ f.chips }}" as="c" hint-placeholder-count="2">
+                    <span style="padding:3px 9px;border-radius:6px;background:var(--surface-2);border:1px solid var(--hairline);font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--ink-muted);">{{ c.label }}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0 14px;">
+              <span style="font-size:14px;font-weight:600;color:var(--ink);">合計行数</span>
+              <span style="font-size:20px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--primary);">{{ comboCount }} 行</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <button onClick="{{ goStep2 }}" style="{{ sBtnSecondary }}" style-hover="{{ sBtnSecondaryHover }}">← 戻る</button>
+            <button onClick="{{ generate }}" style="{{ sBtnPrimary }}" style-hover="{{ sBtnPrimaryHover }}">✓&nbsp;組み合わせ表を生成</button>
+          </div>
+        </div>
+        </sc-if>
+
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isPlan }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="要項詳細" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:14px 40px 0;border-bottom:1px solid var(--hairline);flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;">
+        <div style="display:flex;gap:2px;">
+          <button onClick="{{ tabOverviewClick }}" style="{{ tabOverviewStyle }}">概要</button>
+          <button onClick="{{ tabConditionsClick }}" style="{{ tabConditionsStyle }}">条件・水準</button>
+          <button onClick="{{ tabTableClick }}" style="{{ tabTableStyle }}">組み合わせ表</button>
+        </div>
+        <span style="font-size:12px;color:var(--ink-subtle);font-family:'JetBrains Mono',monospace;white-space:nowrap;padding-bottom:11px;">更新 {{ planUpdated }}</span>
+      </div>
+
+      <div style="flex:1;overflow:auto;">
+
+        <sc-if value="{{ tabOverview }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:920px;margin:0 auto;padding:36px 40px 80px;">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;">
+            <div style="{{ sCard }}padding:18px 20px;">
+              <div style="font-size:12px;color:var(--ink-subtle);margin-bottom:10px;">撮像済み</div>
+              <div style="font-size:26px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--ink);">{{ sumDone }}<span style="font-size:15px;color:var(--ink-tertiary);"> / {{ sumTotal }}</span></div>
+            </div>
+            <div style="{{ sCard }}padding:18px 20px;">
+              <div style="font-size:12px;color:var(--ink-subtle);margin-bottom:10px;">進捗率</div>
+              <div style="font-size:26px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--ink);margin-bottom:8px;">{{ sumPctLabel }}</div>
+              <div style="height:5px;background:var(--surface-3);border-radius:9999px;overflow:hidden;"><div style="height:100%;background:var(--st-done);width:{{ sumPctNum }}%;"></div></div>
+            </div>
+            <div style="{{ sCard }}padding:18px 20px;">
+              <div style="font-size:12px;color:var(--ink-subtle);margin-bottom:10px;">要確認</div>
+              <div style="font-size:26px;font-weight:600;font-family:'JetBrains Mono',monospace;color:{{ sumCheckColor }};">{{ sumCheck }}<span style="font-size:15px;color:var(--ink-tertiary);"> 件</span></div>
+            </div>
+            <div style="{{ sCard }}padding:18px 20px;">
+              <div style="font-size:12px;color:var(--ink-subtle);margin-bottom:10px;">合計見積時間</div>
+              <div style="font-size:22px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--ink);">{{ sumDurLabel }}</div>
+            </div>
+          </div>
+          <div style="{{ sCard }}padding:24px 26px;">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.05em;color:var(--ink-tertiary);margin-bottom:12px;">注意事項</div>
+            <sc-if value="{{ hasPlanNote }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:15px;color:var(--ink-muted);line-height:1.7;white-space:pre-wrap;">{{ planNote }}</div>
+            </sc-if>
+            <sc-if value="{{ noPlanNote }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:14px;color:var(--ink-tertiary);">注意事項は登録されていません。</div>
+            </sc-if>
+          </div>
+          <div style="margin-top:24px;display:flex;justify-content:flex-end;">
+            <button onClick="{{ tabTableClick }}" style="{{ sBtnPrimary }}" style-hover="{{ sBtnPrimaryHover }}">組み合わせ表を開く →</button>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ tabConditions }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:920px;margin:0 auto;padding:36px 40px 80px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;background:var(--surface-2);border:1px solid var(--hairline);margin-bottom:20px;">
+            <span style="width:16px;height:16px;border-radius:50%;border:1.5px solid var(--ink-subtle);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-subtle);flex:0 0 auto;">i</span>
+            <span style="font-size:13px;color:var(--ink-muted);">生成後の条件値は直接編集できません。水準を変えるには要項を作り直してください。</span>
+          </div>
+          <div style="{{ sCard }}padding:8px 24px;">
+            <sc-for list="{{ planFactorsView }}" as="f" hint-placeholder-count="4">
+              <div style="display:flex;align-items:flex-start;gap:20px;padding:18px 0;border-bottom:1px solid var(--hairline);">
+                <div style="width:140px;flex:0 0 auto;">
+                  <div style="font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;">{{ f.name }}</div>
+                  <div style="font-size:12px;color:var(--ink-subtle);margin-top:3px;">{{ f.typeLabel }}</div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:7px;padding-top:1px;">
+                  <sc-for list="{{ f.chips }}" as="c" hint-placeholder-count="3">
+                    <span style="padding:4px 11px;border-radius:7px;background:var(--surface-2);border:1px solid var(--hairline-strong);font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--ink-muted);">{{ c.label }}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ tabTable }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="position:sticky;top:0;z-index:5;background:var(--canvas);border-bottom:1px solid var(--hairline);padding:16px 40px;display:flex;align-items:center;gap:26px;">
+            <div style="display:flex;align-items:center;gap:9px;">
+              <span style="font-size:13px;color:var(--ink-subtle);">進捗</span>
+              <span style="font-size:15px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--ink);">{{ sumDone }} / {{ sumTotal }}</span>
+              <div style="width:120px;height:6px;background:var(--surface-3);border-radius:9999px;overflow:hidden;"><div style="height:100%;background:var(--st-done);width:{{ sumPctNum }}%;"></div></div>
+              <span style="font-size:13px;font-weight:600;color:var(--ink);">{{ sumPctLabel }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--st-check);"></span><span style="font-size:13px;color:var(--ink-muted);">要確認 <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:{{ sumCheckColor }};">{{ sumCheck }}</span></span></div>
+            <div style="flex:1;"></div>
+            <span style="font-size:13px;color:var(--ink-subtle);">合計見積時間</span>
+            <span style="font-size:15px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--ink);">{{ sumDurLabel }}</span>
+          </div>
+          <div style="padding:8px 40px 100px;overflow-x:auto;">
+            <div style="display:flex;align-items:center;gap:7px;padding:2px 6px 10px;color:var(--ink-tertiary);font-size:12px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.1"></circle><circle cx="15" cy="6" r="1.1"></circle><circle cx="9" cy="12" r="1.1"></circle><circle cx="15" cy="12" r="1.1"></circle><circle cx="9" cy="18" r="1.1"></circle><circle cx="15" cy="18" r="1.1"></circle></svg>
+              <span>{{ dragHint }}</span>
+            </div>
+            <table style="width:100%;min-width:760px;border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--hairline-strong);">
+                  <th style="width:34px;"></th>
+                  <th style="text-align:left;padding:12px 8px;font-size:11px;font-weight:600;letter-spacing:0.04em;color:var(--ink-tertiary);width:40px;">#</th>
+                  <sc-for list="{{ tableColumns }}" as="col" hint-placeholder-count="4">
+                    <th style="padding:0;white-space:nowrap;"><button onClick="{{ col.onSort }}" style="{{ col.sortStyle }}" style-hover="{{ sortHover }}"><span>{{ col.name }}</span><span style="{{ col.arrowStyle }}">{{ col.arrow }}</span></button></th>
+                  </sc-for>
+                  <th style="padding:0;width:118px;white-space:nowrap;"><button onClick="{{ sortCount }}" style="{{ countSortStyle }}" style-hover="{{ sortHover }}"><span>撮像回数</span><span style="{{ countArrowStyle }}">{{ countArrow }}</span></button></th>
+                  <th style="padding:0;width:108px;white-space:nowrap;"><button onClick="{{ sortEst }}" style="{{ estSortStyle }}" style-hover="{{ sortHover }}"><span>見積時間</span><span style="{{ estArrowStyle }}">{{ estArrow }}</span></button></th>
+                  <th style="padding:0;width:92px;white-space:nowrap;"><button onClick="{{ sortStatus }}" style="{{ statusSortStyle }}" style-hover="{{ sortHover }}"><span>状態</span><span style="{{ statusArrowStyle }}">{{ statusArrow }}</span></button></th>
+                  <th style="width:44px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ tableRows }}" as="r" hint-placeholder-count="8">
+                  <tr style="{{ r.rowStyle }}" style-hover="{{ trHover }}" onDragOver="{{ r.onDragOver }}" onDrop="{{ r.onDrop }}" onDragEnd="{{ r.onDragEnd }}">
+                    <td style="padding:0 2px 0 8px;"><span draggable="true" onDragStart="{{ r.onDragStart }}" style="{{ r.gripStyle }}" title="ドラッグで並べ替え">{{ r.gripIcon }}</span></td>
+                    <td style="padding:11px 8px;font-size:13px;color:var(--ink-tertiary);font-family:'JetBrains Mono',monospace;">{{ r.index }}</td>
+                    <sc-for list="{{ r.cells }}" as="cell" hint-placeholder-count="4">
+                      <td style="padding:11px 14px;font-size:13px;color:var(--ink);font-family:'JetBrains Mono',monospace;white-space:nowrap;">{{ cell.text }}</td>
+                    </sc-for>
+                    <td style="padding:11px 14px;">
+                      <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                        <button onClick="{{ r.onDec }}" style="{{ stepBtn }}" style-hover="{{ stepBtnHover }}">−</button>
+                        <span style="width:30px;text-align:center;font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--ink);">{{ r.count }}</span>
+                        <button onClick="{{ r.onInc }}" style="{{ stepBtn }}" style-hover="{{ stepBtnHover }}">＋</button>
+                      </div>
+                    </td>
+                    <td style="padding:11px 14px;text-align:right;font-size:13px;color:var(--ink-muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;">{{ r.estLabel }}</td>
+                    <td style="padding:11px 14px;text-align:center;">
+                      <button onClick="{{ r.onToggleMenu }}" title="{{ r.statusLabel }}" style="{{ r.statusBtnStyle }}" style-hover="{{ statusBtnHover }}">
+                        <span style="display:flex;">{{ r.statusGlyph }}</span>
+                      </button>
+                    </td>
+                    <td style="padding:11px 8px;text-align:center;">
+                      <button onClick="{{ r.onDelete }}" style="{{ delBtn }}" style-hover="{{ delBtnHover }}">✕</button>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+            <sc-if value="{{ tableEmpty }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:48px;text-align:center;color:var(--ink-subtle);font-size:14px;">すべての行が削除されました。</div>
+            </sc-if>
+          </div>
+        </div>
+        </sc-if>
+
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="アプリ設定" style="flex:1;overflow:auto;">
+      <div style="max-width:1100px;margin:0 auto;padding:40px 48px 96px;">
+        <p style="margin:0 0 22px;font-size:14px;color:var(--ink-subtle);max-width:560px;line-height:1.5;">データ取り要項で使う条件項目を定義します。投影枚数・露光時間は見積時間の算出に使うため削除できません。</p>
+        <div style="{{ sCard }}overflow:hidden;">
+          <sc-for list="{{ itemsView }}" as="it" hint-placeholder-count="7">
+            <div style="display:flex;align-items:center;gap:16px;padding:16px 22px;border-bottom:1px solid var(--hairline);">
+              <div style="width:170px;flex:0 0 auto;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:15px;font-weight:600;color:var(--ink);">{{ it.name }}</span>
+                <sc-if value="{{ it.locked }}" hint-placeholder-val="{{ true }}"><span style="font-size:10px;padding:1px 6px;border-radius:5px;background:var(--surface-3);color:var(--ink-subtle);font-weight:600;">固定</span></sc-if>
+              </div>
+              <span style="width:64px;flex:0 0 auto;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--hairline);color:var(--ink-muted);text-align:center;">{{ it.typeLabel }}</span>
+              <span style="flex:1;font-size:13px;color:var(--ink-subtle);font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ it.detailLabel }}</span>
+              <div style="display:flex;gap:4px;flex:0 0 auto;">
+                <button onClick="{{ it.onEdit }}" title="編集" style="{{ iconBtn }}" style-hover="{{ iconBtnHover }}">{{ editIcon }}</button>
+                <button onClick="{{ it.onDelete }}" title="削除" style="{{ it.delIconStyle }}" style-hover="{{ it.delIconHover }}">{{ trashIcon }}</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+  </main>
+
+  <sc-if value="{{ statusMenuOpen }}" hint-placeholder-val="{{ true }}">
+  <div onClick="{{ closeStatusMenu }}" style="position:fixed;inset:0;z-index:40;">
+    <div onClick="{{ stop }}" style="{{ statusMenuStyle }}">
+      <sc-for list="{{ statusMenuOptions }}" as="o" hint-placeholder-count="3">
+        <button onClick="{{ o.onClick }}" style="{{ o.style }}" style-hover="{{ menuItemHover }}">
+          <span style="display:flex;flex:0 0 auto;">{{ o.glyph }}</span>
+          <span style="flex:1;text-align:left;white-space:nowrap;">{{ o.label }}</span>
+          <sc-if value="{{ o.active }}" hint-placeholder-val="{{ true }}"><span style="color:var(--primary);display:flex;">{{ checkIcon }}</span></sc-if>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ true }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:50;background:var(--overlay);display:flex;align-items:center;justify-content:center;padding:24px;">
+    <div onClick="{{ stop }}" style="width:540px;max-width:100%;max-height:90vh;overflow:auto;background:var(--surface-1);border:1px solid var(--hairline-strong);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,0.5);">
+      <div style="padding:22px 26px 18px;border-bottom:1px solid var(--hairline);">
+        <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;">{{ modalTitle }}</h3>
+      </div>
+      <div style="padding:24px 26px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--ink-muted);margin-bottom:8px;">条件名 <span style="color:var(--primary);">*</span></label>
+        <input value="{{ modalName }}" onInput="{{ onModalName }}" placeholder="例：管電圧" style="{{ sInput }}" style-focus="{{ sInputFocus }}">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--ink-muted);margin:22px 0 8px;">形式</label>
+        <div style="display:flex;gap:8px;">
+          <button onClick="{{ setTypeSelect }}" style="{{ typeSelectStyle }}">選択肢</button>
+          <button onClick="{{ setTypeValue }}" style="{{ typeValueStyle }}">値</button>
+        </div>
+        <sc-if value="{{ modalIsSelect }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:22px;">
+            <label style="display:block;font-size:13px;font-weight:600;color:var(--ink-muted);margin-bottom:10px;">選択肢</label>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <sc-for list="{{ modalOptions }}" as="o" hint-placeholder-count="2">
+                <div style="display:flex;gap:8px;">
+                  <input value="{{ o.value }}" onInput="{{ o.onChange }}" placeholder="候補値" style="{{ sInput }}" style-focus="{{ sInputFocus }}">
+                  <button onClick="{{ o.onRemove }}" style="{{ delBtn }}" style-hover="{{ delBtnHover }}">✕</button>
+                </div>
+              </sc-for>
+            </div>
+            <button onClick="{{ onAddOption }}" style="{{ addOptStyle }}" style-hover="{{ addOptHover }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg><span>候補値を追加</span></button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ modalIsValue }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div><label style="display:block;font-size:12px;font-weight:600;color:var(--ink-muted);margin-bottom:7px;">最小値</label><input value="{{ modalMin }}" onInput="{{ onModalMin }}" style="{{ sInput }}" style-focus="{{ sInputFocus }}"></div>
+            <div><label style="display:block;font-size:12px;font-weight:600;color:var(--ink-muted);margin-bottom:7px;">最大値</label><input value="{{ modalMax }}" onInput="{{ onModalMax }}" style="{{ sInput }}" style-focus="{{ sInputFocus }}"></div>
+            <div><label style="display:block;font-size:12px;font-weight:600;color:var(--ink-muted);margin-bottom:7px;">刻み幅</label><input value="{{ modalStep }}" onInput="{{ onModalStep }}" style="{{ sInput }}" style-focus="{{ sInputFocus }}"></div>
+            <div><label style="display:block;font-size:12px;font-weight:600;color:var(--ink-muted);margin-bottom:7px;">単位</label><input value="{{ modalUnit }}" onInput="{{ onModalUnit }}" placeholder="kV / ms など" style="{{ sInput }}" style-focus="{{ sInputFocus }}"></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ modalHasErr }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:16px;font-size:13px;color:#e5534b;">{{ modalErr }}</div>
+        </sc-if>
+      </div>
+      <div style="padding:16px 26px;border-top:1px solid var(--hairline);display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ closeModal }}" style="{{ sBtnSecondary }}" style-hover="{{ sBtnSecondaryHover }}">キャンセル</button>
+        <button onClick="{{ saveItem }}" style="{{ sBtnPrimary }}" style-hover="{{ sBtnPrimaryHover }}">保存</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this._n = 0;
+    const items = this.seedItems();
+    const plans = this.seedPlans();
+    this.state = {
+      theme:'dark', view:'list', planId: plans[0].id, planTab:'table',
+      createStep:1, draft:null, openStatusRow:null, itemModal:null,
+      dragRowId:null, dragOverRowId:null, menuPos:null, sort:null,
+      items, plans,
+    };
+  }
+
+  PAL = {
+    dark:{
+      '--canvas':'#08090a','--surface-1':'#0f1011','--surface-2':'#141516','--surface-3':'#1a1b1d',
+      '--surface-hover':'#1c1d1f','--sidebar-bg':'#0b0c0d',
+      '--hairline':'#23252a','--hairline-strong':'#34343a',
+      '--ink':'#f7f8f8','--ink-muted':'#d0d6e0','--ink-subtle':'#8a8f98','--ink-tertiary':'#62666d',
+      '--primary':'#5e6ad2','--primary-hover':'#828fff','--on-primary':'#ffffff',
+      '--st-todo':'#8a8f98','--st-todo-bg':'rgba(138,143,152,0.15)',
+      '--st-done':'#27a644','--st-done-bg':'rgba(39,166,68,0.16)',
+      '--st-check':'#f2c94c','--st-check-bg':'rgba(242,201,76,0.15)',
+      '--overlay':'rgba(0,0,0,0.6)','--shadow':'0 1px 2px rgba(0,0,0,0.4)',
+    },
+    light:{
+      '--canvas':'#fbfbfb','--surface-1':'#ffffff','--surface-2':'#f5f6f7','--surface-3':'#eef0f1',
+      '--surface-hover':'#f1f2f4','--sidebar-bg':'#f6f6f7',
+      '--hairline':'#e8e9eb','--hairline-strong':'#d7d9dc',
+      '--ink':'#16181c','--ink-muted':'#3a3f47','--ink-subtle':'#6a7079','--ink-tertiary':'#9aa0a8',
+      '--primary':'#5e6ad2','--primary-hover':'#828fff','--on-primary':'#ffffff',
+      '--st-todo':'#8a8f98','--st-todo-bg':'rgba(138,143,152,0.14)',
+      '--st-done':'#27a644','--st-done-bg':'rgba(39,166,68,0.13)',
+      '--st-check':'#b8860b','--st-check-bg':'rgba(184,134,11,0.13)',
+      '--overlay':'rgba(20,22,28,0.32)','--shadow':'0 1px 2px rgba(16,18,33,0.08)',
+    },
+  };
+  SM = {
+    todo:{label:'未着手',var:'--st-todo',bg:'--st-todo-bg'},
+    done:{label:'撮像済み',var:'--st-done',bg:'--st-done-bg'},
+    check:{label:'要確認',var:'--st-check',bg:'--st-check-bg'},
+  };
+
+  nid(p){ this._n+=1; return (p||'id')+this._n; }
+
+  seedItems(){
+    return [
+      {id:'proj',name:'投影枚数',type:'value',min:100,max:3600,step:100,unit:'枚',locked:true},
+      {id:'exp',name:'露光時間',type:'value',min:1,max:1000,step:1,unit:'ms',locked:true},
+      {id:'kv',name:'管電圧',type:'value',min:50,max:300,step:10,unit:'kV'},
+      {id:'ua',name:'管電流',type:'value',min:10,max:500,step:10,unit:'µA'},
+      {id:'angle',name:'照射角度',type:'select',options:['0°','30°','45°','60°','90°']},
+      {id:'target',name:'検査対象',type:'select',options:['基板A','基板B','コネクタ','はんだ接合部']},
+      {id:'filter',name:'金属フィルタ',type:'select',options:['ON','OFF']},
+    ];
+  }
+
+  cartesian(spec){
+    let combos=[[]];
+    spec.forEach(f=>{
+      const next=[];
+      combos.forEach(c=> f.levels.forEach(v=> next.push(c.concat([[f.condId,v]]))));
+      combos=next;
+    });
+    return combos;
+  }
+  buildRows(spec){
+    return this.cartesian(spec).map(c=>{
+      const values={}; c.forEach(p=> values[p[0]]=p[1]);
+      return {id:this.nid('row'),values,count:1,status:'todo'};
+    });
+  }
+
+  seedPlans(){
+    const mk=(name,note,spec,created,updated,stf)=>{
+      const rows=this.buildRows(spec);
+      rows.forEach((r,i)=>{ r.status=stf(i,rows.length); });
+      return {id:this.nid('plan'),name,note,factorOrder:spec.map(s=>s.condId),createdLabel:created,updatedLabel:updated,rows};
+    };
+    return [
+      mk('基板はんだ接合部 学習データ 第1弾',
+        '基板A/Bのはんだ接合部を対象に、管電圧と露光時間を振って学習用データを取得する。ボイド検出モデル向け。\n撮像後は接合部が画角中央に来ているか必ず確認すること。',
+        [{condId:'target',levels:['基板A','基板B']},{condId:'kv',levels:[150,300]},{condId:'proj',levels:[1200]},{condId:'exp',levels:[100,200]}],
+        '2026-06-08 14:20','2026-06-10 09:42',
+        (i,n)=> i<n-3 ? 'done' : (i===n-2 ? 'check' : 'todo')),
+      mk('コネクタ実装 照射角度ばらつきデータ',
+        '照射角度を3水準振って、コネクタ実装部の見え方を比較する。30°で陰になる箇所があれば要確認に。',
+        [{condId:'angle',levels:['30°','45°','60°']},{condId:'kv',levels:[100,200]},{condId:'proj',levels:[600]},{condId:'exp',levels:[100]}],
+        '2026-06-05 11:05','2026-06-09 17:30',
+        (i,n)=> i<2 ? 'done' : (i===2 ? 'check' : 'todo')),
+      mk('金属フィルタ有無 比較セット',
+        '金属フィルタON/OFFでのコントラスト差を確認する比較用データ。',
+        [{condId:'filter',levels:['ON','OFF']},{condId:'target',levels:['基板A']},{condId:'proj',levels:[2400]},{condId:'exp',levels:[150,300]}],
+        '2026-06-10 10:15','2026-06-10 10:15',
+        ()=> 'todo'),
+    ];
+  }
+
+  nowLabel(){ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+  getItem(id){ return this.state.items.find(x=>x.id===id); }
+  dispVal(item,v){ if(!item) return v; return item.type==='value' ? (v+(item.unit||'')) : v; }
+  estSec(row){ const proj=row.values['proj'], exp=row.values['exp']; if(proj==null||exp==null) return null; return proj*exp*row.count/1000; }
+  fmtDur(sec){ if(sec==null) return '—'; const s=Math.round(sec); if(s<60) return s+'秒'; if(s<3600){ const m=Math.floor(s/60),r=s%60; return m+'分'+(r? r+'秒':''); } const h=Math.floor(s/3600),mm=Math.floor((s%3600)/60); return h+'時間'+(mm? mm+'分':''); }
+  curPlan(){ return this.state.plans.find(p=>p.id===this.state.planId); }
+  factorLevels(plan,cid){ const seen=[],out=[]; plan.rows.forEach(r=>{ const v=r.values[cid]; if(v!=null && seen.indexOf(String(v))<0){ seen.push(String(v)); out.push(v); } }); return out; }
+
+  componentDidMount(){ this.syncBody(); }
+  componentDidUpdate(){ this.syncBody(); }
+  syncBody(){ const pal=this.PAL[this.state.theme]; document.body.style.background=pal['--canvas']; document.documentElement.style.colorScheme=this.state.theme; }
+
+  // navigation
+  setTheme=(t)=>this.setState({theme:t});
+  go=(v)=>this.setState({view:v,openStatusRow:null});
+  openPlan=(id)=>this.setState({view:'plan',planId:id,planTab:'table',openStatusRow:null});
+  startCreate=()=>this.setState({view:'create',createStep:1,openStatusRow:null,menuPos:null,draft:{name:'',note:'',factorOrder:['proj','exp'],levels:{proj:[],exp:[]},inputs:{}}});
+  cancelCreate=()=>this.setState({view:'list',draft:null});
+  setStep=(n)=>this.setState({createStep:n});
+  setDraft=(patch)=>this.setState(s=>({draft:Object.assign({},s.draft,patch)}));
+
+  toggleFactor=(id)=>this.setState(s=>{
+    const it=this.getItem(id);
+    if(it && it.locked) return {};
+    const d=Object.assign({},s.draft); const lv=Object.assign({},d.levels);
+    if(d.factorOrder.includes(id)){ d.factorOrder=d.factorOrder.filter(x=>x!==id); delete lv[id]; }
+    else { d.factorOrder=d.factorOrder.concat([id]); lv[id]=[]; }
+    d.levels=lv; return {draft:d};
+  });
+  toggleSelectLevel=(cid,val)=>this.setState(s=>{
+    const d=Object.assign({},s.draft); const lv=Object.assign({},d.levels); const cur=(lv[cid]||[]).slice();
+    const i=cur.indexOf(val); if(i>=0) cur.splice(i,1); else cur.push(val);
+    lv[cid]=cur; d.levels=lv; return {draft:d};
+  });
+  setValInput=(cid,val)=>this.setState(s=>{ const d=Object.assign({},s.draft); d.inputs=Object.assign({},d.inputs); d.inputs[cid]={value:val,err:''}; return {draft:d}; });
+  addValLevel=(cid)=>this.setState(s=>{
+    const d=Object.assign({},s.draft); const item=this.getItem(cid);
+    const raw=((d.inputs[cid]&&d.inputs[cid].value)||'').trim(); const num=Number(raw); let err='';
+    if(raw===''||isNaN(num)) err='数値を入力してください';
+    else if(num<item.min||num>item.max) err='範囲は '+item.min+'〜'+item.max;
+    else { const k=(num-item.min)/item.step; if(Math.abs(k-Math.round(k))>1e-9) err=item.step+'刻みで入力してください'; }
+    const lv=Object.assign({},d.levels); const cur=(lv[cid]||[]).slice();
+    if(!err && cur.indexOf(num)>=0) err='すでに追加されています';
+    d.inputs=Object.assign({},d.inputs);
+    if(err){ d.inputs[cid]={value:raw,err:err}; d.levels=lv; return {draft:d}; }
+    cur.push(num); cur.sort((a,b)=>a-b); lv[cid]=cur; d.levels=lv; d.inputs[cid]={value:'',err:''};
+    return {draft:d};
+  });
+  removeValLevel=(cid,val)=>this.setState(s=>{ const d=Object.assign({},s.draft); const lv=Object.assign({},d.levels); lv[cid]=(lv[cid]||[]).filter(v=>v!==val); d.levels=lv; return {draft:d}; });
+  generate=()=>this.setState(s=>{
+    const d=s.draft;
+    const spec=d.factorOrder.filter(id=>(d.levels[id]||[]).length).map(id=>({condId:id,levels:d.levels[id]}));
+    const rows=this.buildRows(spec); const now=this.nowLabel();
+    const plan={id:this.nid('plan'),name:(d.name||'').trim()||'無題のデータ取り要項',note:d.note,factorOrder:spec.map(x=>x.condId),createdLabel:now,updatedLabel:now,rows};
+    return {plans:[plan].concat(s.plans),view:'plan',planId:plan.id,planTab:'table',draft:null};
+  });
+
+  setStatus=(rowId,st)=>this.setState(s=>({openStatusRow:null,menuPos:null,plans:s.plans.map(p=> p.id!==s.planId?p:Object.assign({},p,{updatedLabel:this.nowLabel(),rows:p.rows.map(r=>r.id===rowId?Object.assign({},r,{status:st}):r)}))}));
+  toggleMenu=(rowId,e)=>{ const open=this.state.openStatusRow===rowId; if(open){ this.setState({openStatusRow:null,menuPos:null}); return; } let pos=null; try{ const r=e.currentTarget.getBoundingClientRect(); pos={top:r.bottom+5,right:Math.max(8,window.innerWidth-r.right)}; }catch(_){} this.setState({openStatusRow:rowId,menuPos:pos}); };
+  closeStatusMenu=()=>this.setState({openStatusRow:null,menuPos:null});
+  changeCount=(rowId,delta)=>this.setState(s=>({plans:s.plans.map(p=> p.id!==s.planId?p:Object.assign({},p,{updatedLabel:this.nowLabel(),rows:p.rows.map(r=>r.id===rowId?Object.assign({},r,{count:Math.max(1,r.count+delta)}):r)}))}));
+  deleteRow=(rowId)=>this.setState(s=>({plans:s.plans.map(p=> p.id!==s.planId?p:Object.assign({},p,{updatedLabel:this.nowLabel(),rows:p.rows.filter(r=>r.id!==rowId)}))}));
+
+  // drag & drop (撮像順の並べ替え)
+  onRowDragStart=(rowId)=>(e)=>{ this.setState({dragRowId:rowId,openStatusRow:null}); if(e.dataTransfer){ e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain',rowId);}catch(_){} } };
+  onRowDragOver=(rowId)=>(e)=>{ e.preventDefault(); if(e.dataTransfer) e.dataTransfer.dropEffect='move'; if(this.state.dragOverRowId!==rowId) this.setState({dragOverRowId:rowId}); };
+  onRowDrop=(rowId)=>(e)=>{ e.preventDefault(); this.reorderRows(this.state.dragRowId,rowId); this.setState({dragRowId:null,dragOverRowId:null}); };
+  onRowDragEnd=()=>this.setState({dragRowId:null,dragOverRowId:null});
+  reorderRows=(src,dst)=>{ if(!src||src===dst) return; this.setState(s=>({plans:s.plans.map(p=>{ if(p.id!==s.planId) return p; const rows=p.rows.slice(); const si=rows.findIndex(r=>r.id===src); const di=rows.findIndex(r=>r.id===dst); if(si<0||di<0) return p; const m=rows.splice(si,1)[0]; rows.splice(di,0,m); return Object.assign({},p,{rows,updatedLabel:this.nowLabel()}); })})); };
+
+  // sort
+  setSort=(key)=>this.setState(s=>{ const cur=s.sort; let next; if(!cur||cur.key!==key) next={key,dir:'asc'}; else if(cur.dir==='asc') next={key,dir:'desc'}; else next=null; return {sort:next,openStatusRow:null,menuPos:null}; });
+  sortedRows(plan){ const s=this.state.sort; if(!s) return plan.rows.map((r,i)=>({r,i})); const rank={todo:0,done:1,check:2}; const key=s.key; const dir=s.dir==='desc'?-1:1;
+    const val=(r)=>{ if(key==='__count') return r.count; if(key==='__est'){ const e=this.estSec(r); return e==null?-1:e; } if(key==='__status') return rank[r.status]; const it=this.getItem(key); const v=r.values[key]; if(it&&it.type==='value') return typeof v==='number'?v:parseFloat(v); return v==null?'':String(v); };
+    const idx=plan.rows.map((r,i)=>({r,i}));
+    idx.sort((a,b)=>{ const va=val(a.r),vb=val(b.r); let c; if(typeof va==='number'&&typeof vb==='number') c=va-vb; else c=String(va).localeCompare(String(vb),'ja',{numeric:true}); if(c!==0) return c*dir; return a.i-b.i; });
+    return idx;
+  }
+
+  // settings
+  openAddItem=()=>this.setState({itemModal:{mode:'add',data:{name:'',type:'select',options:[''],min:'0',max:'100',step:'1',unit:''},err:''}});
+  openEditItem=(id)=>{ const it=this.getItem(id); this.setState({itemModal:{mode:'edit',id,locked:!!it.locked,data:{name:it.name,type:it.type,options:it.options?it.options.slice():[''],min:String(it.min!=null?it.min:0),max:String(it.max!=null?it.max:100),step:String(it.step!=null?it.step:1),unit:it.unit||''},err:''}}); };
+  closeModal=()=>this.setState({itemModal:null});
+  setModalData=(patch)=>this.setState(s=>({itemModal:Object.assign({},s.itemModal,{data:Object.assign({},s.itemModal.data,patch),err:''})}));
+  setModalOption=(i,val)=>this.setState(s=>{ const opts=s.itemModal.data.options.slice(); opts[i]=val; return {itemModal:Object.assign({},s.itemModal,{data:Object.assign({},s.itemModal.data,{options:opts}),err:''})}; });
+  addModalOption=()=>this.setState(s=>{ const opts=s.itemModal.data.options.concat(['']); return {itemModal:Object.assign({},s.itemModal,{data:Object.assign({},s.itemModal.data,{options:opts})})}; });
+  removeModalOption=(i)=>this.setState(s=>{ const opts=s.itemModal.data.options.filter((_,k)=>k!==i); return {itemModal:Object.assign({},s.itemModal,{data:Object.assign({},s.itemModal.data,{options:opts.length?opts:['']})})}; });
+  saveItem=()=>this.setState(s=>{
+    const m=s.itemModal, d=m.data; const name=(d.name||'').trim(); let err='';
+    if(!name) err='条件名を入力してください';
+    let opts=null,min,max,step,unit;
+    if(!err && d.type==='select'){ opts=d.options.map(o=>(o||'').trim()).filter(Boolean); if(!opts.length) err='選択肢を1つ以上入力してください'; }
+    if(!err && d.type==='value'){ min=Number(d.min); max=Number(d.max); step=Number(d.step); unit=(d.unit||'').trim(); if([min,max,step].some(isNaN)) err='最小値・最大値・刻み幅は数値で入力してください'; else if(min>=max) err='最大値は最小値より大きくしてください'; else if(step<=0) err='刻み幅は0より大きい値にしてください'; }
+    if(err) return {itemModal:Object.assign({},m,{err:err})};
+    let items;
+    if(m.mode==='add'){ const it=d.type==='select'?{id:this.nid('cond'),name,type:'select',options:opts}:{id:this.nid('cond'),name,type:'value',min,max,step,unit}; items=s.items.concat([it]); }
+    else { items=s.items.map(x=> x.id!==m.id?x : (d.type==='select'?Object.assign({},x,{name,type:'select',options:opts,min:undefined,max:undefined,step:undefined,unit:undefined}):Object.assign({},x,{name,type:'value',min,max,step,unit,options:undefined}))); }
+    return {items,itemModal:null};
+  });
+  deleteItem=(id)=>this.setState(s=>({items:s.items.filter(x=>x.id!==id)}));
+
+  // styles
+  ic(name,size,sw){
+    const P={
+      list:[['path',{d:'M4 6h16'}],['path',{d:'M4 12h16'}],['path',{d:'M4 18h10'}]],
+      gear:[['circle',{cx:12,cy:12,r:3}],['path',{d:'M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1'}]],
+      doc:[['path',{d:'M5 3h9l5 5v13H5z'}],['path',{d:'M14 3v5h5'}],['path',{d:'M8 13h8'}],['path',{d:'M8 17h5'}]],
+      plus:[['path',{d:'M12 5v14M5 12h14'}]],
+      grip:[['circle',{cx:9,cy:6,r:1.05,fill:'currentColor',stroke:'none'}],['circle',{cx:15,cy:6,r:1.05,fill:'currentColor',stroke:'none'}],['circle',{cx:9,cy:12,r:1.05,fill:'currentColor',stroke:'none'}],['circle',{cx:15,cy:12,r:1.05,fill:'currentColor',stroke:'none'}],['circle',{cx:9,cy:18,r:1.05,fill:'currentColor',stroke:'none'}],['circle',{cx:15,cy:18,r:1.05,fill:'currentColor',stroke:'none'}]],
+      trash:[['path',{d:'M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13'}]],
+      edit:[['path',{d:'M4 20h4l10-10-4-4L4 16z'}],['path',{d:'M13.5 6.5l4 4'}]],
+      check:[['polyline',{points:'20 6 9 17 4 12'}]],
+    };
+    const kids=(P[name]||P.list).map((e,i)=>React.createElement(e[0],Object.assign({key:i},e[1])));
+    return React.createElement('svg',{width:size||17,height:size||17,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:sw||1.8,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'block'}},kids);
+  }
+  statusGlyph(status,size){
+    const c='var('+this.SM[status].var+')'; const sz=size||15;
+    const common={width:sz,height:sz,viewBox:'0 0 16 16',style:{display:'block',flex:'0 0 auto'}};
+    if(status==='done') return React.createElement('svg',common,
+      React.createElement('circle',{cx:8,cy:8,r:7,fill:c,key:'c'}),
+      React.createElement('path',{d:'M4.6 8.2 7 10.5l4.4-4.6',fill:'none',stroke:'#fff',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round',key:'p'}));
+    if(status==='check') return React.createElement('svg',common,
+      React.createElement('circle',{cx:8,cy:8,r:6.4,fill:'none',stroke:c,strokeWidth:1.6,key:'r'}),
+      React.createElement('circle',{cx:8,cy:8,r:2.5,fill:c,key:'d'}));
+    return React.createElement('svg',common,
+      React.createElement('circle',{cx:8,cy:8,r:6.4,fill:'none',stroke:c,strokeWidth:1.4,strokeDasharray:'2.4 2.4',key:'r'}));
+  }
+  S(){
+    const sBtnPrimary={display:'inline-flex',alignItems:'center',justifyContent:'center',background:'var(--primary)',color:'var(--on-primary)',border:'none',borderRadius:'8px',padding:'10px 16px',fontSize:'14px',fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em',whiteSpace:'nowrap'};
+    const sBtnSecondary={display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'7px',background:'var(--surface-2)',color:'var(--ink)',border:'1px solid var(--hairline)',borderRadius:'8px',height:'34px',padding:'0 13px',fontSize:'13.5px',fontWeight:500,letterSpacing:'-0.01em',cursor:'pointer',whiteSpace:'nowrap'};
+    const sGhost={display:'inline-flex',alignItems:'center',gap:'6px',background:'transparent',color:'var(--ink-subtle)',border:'none',borderRadius:'7px',padding:'6px 8px',fontSize:'13px',fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'};
+    const sCard={background:'var(--surface-1)',border:'1px solid var(--hairline)',borderRadius:'12px'};
+    const sInput={width:'100%',background:'var(--surface-1)',color:'var(--ink)',border:'1px solid var(--hairline-strong)',borderRadius:'8px',padding:'10px 12px',fontSize:'14px',outline:'none'};
+    return {sBtnPrimary,sBtnSecondary,sGhost,sCard,sInput,
+      sBtnPrimaryHover:{background:'var(--primary-hover)'},
+      sBtnSecondaryHover:{background:'var(--surface-hover)',borderColor:'var(--hairline-strong)'},
+      sGhostHover:{background:'var(--surface-2)',color:'var(--ink)'},
+      sTextarea:Object.assign({},sInput,{minHeight:'120px',lineHeight:1.6,fontFamily:'inherit'}),
+      sInputFocus:{borderColor:'var(--primary)',boxShadow:'0 0 0 3px rgba(94,106,210,0.22)'},
+      rowHover:{background:'var(--surface-2)'},
+      trHover:{background:'var(--surface-2)'},
+      availHover:{background:'var(--surface-2)'},
+      menuItemHover:{background:'var(--surface-2)'},
+    };
+  }
+
+  renderVals(){
+    const s=this.state, S=this.S(); const sm=this.SM;
+    const shellStyle=Object.assign({},this.PAL[s.theme],{display:'flex',minHeight:'100vh',width:'100%',color:'var(--ink)',background:'var(--canvas)',fontFamily:"'Inter',-apple-system,system-ui,sans-serif"});
+    const navBase={display:'flex',alignItems:'center',gap:'10px',width:'100%',height:'34px',padding:'0 10px',borderRadius:'8px',border:'none',background:'transparent',color:'var(--ink-subtle)',fontSize:'13.5px',fontWeight:500,letterSpacing:'-0.01em',cursor:'pointer',textAlign:'left',transition:'background .12s, color .12s'};
+    const navOn=Object.assign({},navBase,{background:'var(--surface-3)',color:'var(--ink)',fontWeight:600});
+    const sun=React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'block'}},
+      React.createElement('circle',{cx:12,cy:12,r:4,key:'c'}),
+      React.createElement('path',{d:'M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19',key:'p'}));
+    const moon=React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'block'}},
+      React.createElement('path',{d:'M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8z',key:'m'}));
+
+    const out={
+      shellStyle, planCount:s.plans.length,
+      goList:()=>this.go('list'), goSettings:()=>this.go('settings'),
+      navListStyle: s.view==='list'?navOn:navBase,
+      navSettingsStyle: s.view==='settings'?navOn:navBase,
+      navListIconColor: s.view==='list'?'color:var(--primary);':'color:inherit;',
+      navSettingsIconColor: s.view==='settings'?'color:var(--primary);':'color:inherit;',
+      navHover:{background:'var(--surface-2)',color:'var(--ink-muted)'},
+      settingsBtnStyle: Object.assign({display:'inline-flex',alignItems:'center',gap:'7px',width:'100%',flex:1,height:'28px',padding:'0 10px',borderRadius:'8px',border:'none',background:'transparent',color:'var(--ink-muted)',fontSize:'12.5px',fontWeight:500,letterSpacing:'-0.01em',cursor:'pointer',textAlign:'left'}, s.view==='settings'?{background:'var(--surface-3)',color:'var(--ink)',fontWeight:600}:{}),
+      settingsBtnHover:{background:'var(--surface-2)',color:'var(--ink)'},
+      quickAddStyle:{display:'flex',alignItems:'center',gap:'7px',width:'100%',justifyContent:'flex-start',height:'32px',padding:'0 13px',borderRadius:'8px',border:'1px solid var(--hairline)',background:'var(--surface-2)',color:'var(--ink)',fontSize:'13.5px',fontWeight:500,letterSpacing:'-0.01em',cursor:'pointer'},
+      quickAddHover:{background:'var(--surface-hover)',borderColor:'var(--hairline-strong)'},
+      toggleTheme:()=>this.setTheme(s.theme==='dark'?'light':'dark'),
+      themeTitle: s.theme==='dark'?'ライトに切替':'ダークに切替',
+      themeIcon: s.theme==='dark'?sun:moon,
+      themeBtnStyle:{width:'32px',height:'32px',padding:0,display:'inline-flex',alignItems:'center',justifyContent:'center',border:'none',borderRadius:'8px',background:'transparent',color:'var(--ink-subtle)',cursor:'pointer',flex:'0 0 auto'},
+      themeBtnHover:{background:'var(--surface-2)',color:'var(--ink)'},
+      startCreate:this.startCreate, cancelCreate:this.cancelCreate,
+      isList:s.view==='list', isCreate:s.view==='create', isPlan:s.view==='plan', isSettings:s.view==='settings',
+      sBtnPrimary:S.sBtnPrimary, sBtnPrimaryHover:S.sBtnPrimaryHover, sBtnSecondary:S.sBtnSecondary, sBtnSecondaryHover:S.sBtnSecondaryHover,
+      sGhost:S.sGhost, sGhostHover:S.sGhostHover, sCard:S.sCard, sInput:S.sInput, sTextarea:S.sTextarea, sInputFocus:S.sInputFocus,
+      rowHover:S.rowHover, trHover:S.trHover, availHover:S.availHover, menuItemHover:S.menuItemHover,
+      stepBtn:{width:24,height:24,borderRadius:6,border:'1px solid var(--hairline-strong)',background:'var(--surface-1)',color:'var(--ink-muted)',cursor:'pointer',fontSize:14,lineHeight:'1',display:'inline-flex',alignItems:'center',justifyContent:'center',padding:0},
+      statusBtnHover:{filter:'brightness(1.12)',borderColor:'var(--hairline-strong)'},
+      topbarActionStyle:{display:'inline-flex',alignItems:'center',gap:'6px',height:'28px',padding:'0 10px',borderRadius:'8px',border:'1px solid var(--hairline)',background:'var(--surface-2)',color:'var(--ink)',fontSize:'12.5px',fontWeight:500,letterSpacing:'-0.01em',cursor:'pointer'},
+      topbarActionHover:{background:'var(--surface-hover)',borderColor:'var(--hairline-strong)'},
+      addOptStyle:{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'6px',width:'100%',marginTop:'8px',padding:'9px 12px',borderRadius:'8px',border:'1px dashed var(--hairline-strong)',background:'transparent',color:'var(--ink-subtle)',fontSize:'13px',fontWeight:500,cursor:'pointer'},
+      addOptHover:{background:'var(--surface-2)',borderColor:'var(--ink-tertiary)',color:'var(--ink)'},
+      stepBtnHover:{background:'var(--surface-2)',color:'var(--ink)'},
+      delBtn:{width:28,height:28,borderRadius:6,border:'none',background:'transparent',color:'var(--ink-tertiary)',cursor:'pointer',fontSize:13,display:'inline-flex',alignItems:'center',justifyContent:'center',padding:0},
+      delBtnHover:{background:'var(--st-check-bg)',color:'#e5534b'},
+      stop:(e)=>{ e.stopPropagation(); },
+    };
+
+    // LIST
+    out.plansView=s.plans.map(p=>{
+      const total=p.rows.length, done=p.rows.filter(r=>r.status==='done').length, check=p.rows.filter(r=>r.status==='check').length;
+      const pct= total? Math.round(done/total*100):0;
+      return {name:p.name,createdLabel:p.createdLabel,updatedLabel:p.updatedLabel,doneCount:done,totalCount:total,pctNum:pct,pctLabel:pct+'%',checkCount:check,hasCheck:check>0,noCheck:check===0,onOpen:()=>this.openPlan(p.id)};
+    });
+
+    // CREATE
+    if(s.view==='create' && s.draft){
+      const d=s.draft;
+      out.step1=s.createStep===1; out.step2=s.createStep===2; out.step3=s.createStep===3;
+      out.draftName=d.name; out.draftNote=d.note; out.draftNameOr=(d.name||'').trim()||'無題のデータ取り要項'; out.hasNote=!!(d.note||'').trim();
+      out.onDraftName=(e)=>this.setDraft({name:e.target.value});
+      out.onDraftNote=(e)=>this.setDraft({note:e.target.value});
+      out.goStep1=()=>this.setStep(1); out.goStep2=()=>this.setStep(2); out.goStep3=()=>this.setStep(3);
+      const nameOk=!!(d.name||'').trim();
+      out.step1NextStyle=Object.assign({},S.sBtnPrimary,nameOk?{}:{opacity:0.45,pointerEvents:'none'});
+      const dotOn={width:22,height:22,borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:600,fontFamily:"'JetBrains Mono',monospace",background:'var(--primary)',color:'#fff'};
+      const dotOff=Object.assign({},dotOn,{background:'var(--surface-3)',color:'var(--ink-subtle)'});
+      const steps=[['1','基本情報'],['2','条件・水準'],['3','確認']];
+      out.stepsView=steps.map((st,i)=>{ const n=i+1, on=s.createStep>=n; return {num:st[0],label:st[1],dotStyle:on?dotOn:dotOff,color:on?'var(--ink)':'var(--ink-subtle)',barStyle:{width:i<2?'26px':'0px',height:'1px',background:'var(--hairline-strong)',margin:'0 4px',display:i<2?'inline-block':'none'}}; });
+
+      out.availableItems=s.items.map(it=>{ const on=d.factorOrder.includes(it.id); const locked=!!it.locked;
+        return {name:it.name,typeLabel:(it.type==='select'?'選択肢':'値 '+(it.unit?('('+it.unit+')'):''))+(locked?' ・必須':''),check:on?'✓':'',onToggle: locked?(()=>{}):(()=>this.toggleFactor(it.id)),
+          style:{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'9px 12px',borderRadius:8,border:'none',cursor:locked?'default':'pointer',background:on?'var(--surface-2)':'transparent',textAlign:'left',color:on?'var(--ink)':'var(--ink-muted)'},
+          boxStyle:{width:18,height:18,borderRadius:5,flex:'0 0 auto',border:on?'none':'1.5px solid var(--hairline-strong)',background:on?(locked?'var(--ink-tertiary)':'var(--primary)'):'transparent',color:'#fff',display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700}};
+      });
+      out.noFactors=d.factorOrder.length===0;
+      out.selectedFactors=d.factorOrder.map(id=>{ const it=this.getItem(id); const lv=d.levels[id]||[]; const inp=d.inputs[id]||{value:'',err:''};
+        const base={id,name:it.name,isSelect:it.type==='select',isValue:it.type==='value',countLabel:lv.length+' 水準',hint:it.type==='value'?('範囲 '+it.min+'〜'+it.max+' / '+it.step+'刻み'+(it.unit?(' / '+it.unit):'')):''};
+        if(it.type==='select'){ base.options=it.options.map(o=>{ const on=lv.includes(o); return {label:o,onToggle:()=>this.toggleSelectLevel(id,o),style:{padding:'7px 13px',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:500,fontFamily:"'JetBrains Mono',monospace",border:on?'1px solid var(--primary)':'1px solid var(--hairline-strong)',background:on?'rgba(94,106,210,0.14)':'var(--surface-1)',color:on?'var(--primary)':'var(--ink-muted)'}}; }); }
+        else { base.chips=lv.map(v=>({label:v+(it.unit||''),onRemove:()=>this.removeValLevel(id,v)})); base.noChips=lv.length===0; base.inputValue=inp.value; base.err=inp.err; base.hasErr=!!inp.err; base.placeholder=it.min+'〜'+it.max+' / '+it.step+'刻み'; base.inputStyle=Object.assign({},S.sInput,{maxWidth:220,fontFamily:"'JetBrains Mono',monospace"}); base.onInput=(e)=>this.setValInput(id,e.target.value); base.onAdd=()=>this.addValLevel(id); base.onKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.addValLevel(id); } }; }
+        return base;
+      });
+      const factorsWithLevels=d.factorOrder.filter(id=>(d.levels[id]||[]).length);
+      const combo=factorsWithLevels.reduce((a,id)=>a*(d.levels[id].length),factorsWithLevels.length?1:0);
+      out.comboCount=combo.toLocaleString('en-US');
+      const genOk=factorsWithLevels.length>0;
+      out.step2NextStyle=Object.assign({},S.sBtnPrimary,genOk?{}:{opacity:0.45,pointerEvents:'none'});
+      out.summaryFactors=factorsWithLevels.map(id=>{ const it=this.getItem(id); return {name:it.name,chips:d.levels[id].map(v=>({label:this.dispVal(it,v)}))}; });
+    }
+
+    // PLAN
+    if(s.view==='plan'){
+      const plan=this.curPlan();
+      if(plan){
+        const total=plan.rows.length, done=plan.rows.filter(r=>r.status==='done').length, check=plan.rows.filter(r=>r.status==='check').length;
+        const pct=total?Math.round(done/total*100):0;
+        let totSec=0,any=false; plan.rows.forEach(r=>{ const e=this.estSec(r); if(e!=null){ totSec+=e; any=true; } });
+        out.planName=plan.name; out.planUpdated=plan.updatedLabel; out.planNote=plan.note; out.hasPlanNote=!!(plan.note||'').trim(); out.noPlanNote=!(plan.note||'').trim();
+        out.sumDone=done; out.sumTotal=total; out.sumPctNum=pct; out.sumPctLabel=pct+'%'; out.sumCheck=check; out.sumCheckColor= check>0?'var(--st-check)':'var(--ink-tertiary)';
+        out.sumDurLabel= any? this.fmtDur(totSec):'—';
+        out.tabOverview=s.planTab==='overview'; out.tabConditions=s.planTab==='conditions'; out.tabTable=s.planTab==='table';
+        out.planTabLabel= s.planTab==='overview'?'概要':(s.planTab==='conditions'?'条件・水準':'組み合わせ表');
+        out.tabOverviewClick=()=>this.setState({planTab:'overview',openStatusRow:null,menuPos:null}); out.tabConditionsClick=()=>this.setState({planTab:'conditions',openStatusRow:null,menuPos:null}); out.tabTableClick=()=>this.setState({planTab:'table',openStatusRow:null,menuPos:null});
+        const tab=(on)=>({border:'none',background:'transparent',padding:'10px 14px',fontSize:14,fontWeight:on?600:500,cursor:'pointer',color:on?'var(--ink)':'var(--ink-subtle)',borderBottom:on?'2px solid var(--primary)':'2px solid transparent',marginBottom:'-1px'});
+        out.tabOverviewStyle=tab(out.tabOverview); out.tabConditionsStyle=tab(out.tabConditions); out.tabTableStyle=tab(out.tabTable);
+
+        out.planFactorsView=plan.factorOrder.map(cid=>{ const it=this.getItem(cid); const lv=this.factorLevels(plan,cid); return {name:it?it.name:cid,typeLabel:it&&it.type==='select'?'選択肢':'値',chips:lv.map(v=>({label:this.dispVal(it,v)}))}; });
+
+        const sortHdr=(active)=>({display:'inline-flex',alignItems:'center',gap:'4px',width:'100%',height:'100%',padding:'12px 14px',border:'none',background:'transparent',cursor:'pointer',fontSize:'11px',fontWeight:600,letterSpacing:'0.04em',color:active?'var(--ink)':'var(--ink-tertiary)',whiteSpace:'nowrap',textAlign:'left'});
+        const arrowSt=(active)=>({display:'inline-flex',alignItems:'center',color:active?'var(--primary)':'transparent',fontSize:'10px',transition:'color .12s'});
+        const sortInfo=(key)=>{ const a=s.sort&&s.sort.key===key; return {active:a,arrow: a?(s.sort.dir==='asc'?'▲':'▼'):'▲'}; };
+        out.sortHover={background:'var(--surface-2)'};
+        out.tableColumns=plan.factorOrder.map(cid=>{ const it=this.getItem(cid); const si=sortInfo(cid); return {name:it?it.name:cid,onSort:()=>this.setSort(cid),sortStyle:Object.assign(sortHdr(si.active),{justifyContent:'flex-start'}),arrow:si.arrow,arrowStyle:arrowSt(si.active)}; });
+        const ci=sortInfo('__count'); out.sortCount=()=>this.setSort('__count'); out.countSortStyle=Object.assign(sortHdr(ci.active),{justifyContent:'center'}); out.countArrow=ci.arrow; out.countArrowStyle=arrowSt(ci.active);
+        const ei=sortInfo('__est'); out.sortEst=()=>this.setSort('__est'); out.estSortStyle=Object.assign(sortHdr(ei.active),{justifyContent:'flex-end'}); out.estArrow=ei.arrow; out.estArrowStyle=arrowSt(ei.active);
+        const sti=sortInfo('__status'); out.sortStatus=()=>this.setSort('__status'); out.statusSortStyle=Object.assign(sortHdr(sti.active),{justifyContent:'center'}); out.statusArrow=sti.arrow; out.statusArrowStyle=arrowSt(sti.active);
+        const sorted = !!s.sort;
+        out.dragHint = sorted ? '並べ替え中はドラッグ無効です。状態列などの見出しをもう一度押すと解除できます。' : '左端のハンドルをドラッグすると撮像順を並べ替えできます。列見出しを押すとソートできます。';
+        out.tableEmpty=plan.rows.length===0;
+        out.tableRows=this.sortedRows(plan).map((entry,idx)=>{ const r=entry.r; const meta=sm[r.status]; const e=this.estSec(r);
+          const isDrag = s.dragRowId===r.id;
+          const isOver = s.dragOverRowId===r.id && s.dragRowId && s.dragRowId!==r.id;
+          const rowBg = r.status==='check'?'var(--st-check-bg)':'transparent';
+          return {
+            index:idx+1, count:r.count,
+            rowStyle:{borderBottom:'1px solid var(--hairline)',background: isOver?'var(--surface-2)':rowBg, opacity:isDrag?0.4:1, boxShadow: isOver?'inset 0 2px 0 var(--primary)':'none'},
+            gripIcon:this.ic('grip',16), gripStyle:{display:'flex',alignItems:'center',justifyContent:'center',color:sorted?'var(--ink-tertiary)':'var(--ink-tertiary)',cursor:sorted?'not-allowed':'grab',padding:'2px',opacity:sorted?0.3:1},
+            onDragStart: sorted?(e2=>{e2.preventDefault();}):this.onRowDragStart(r.id), onDragOver:this.onRowDragOver(r.id), onDrop:this.onRowDrop(r.id), onDragEnd:this.onRowDragEnd,
+            cells:plan.factorOrder.map(cid=>({text:this.dispVal(this.getItem(cid),r.values[cid])})),
+            estLabel:this.fmtDur(e),
+            statusLabel:meta.label, statusGlyph:this.statusGlyph(r.status,16),
+            statusBtnStyle:{display:'inline-flex',alignItems:'center',justifyContent:'center',width:34,height:30,borderRadius:8,cursor:'pointer',border:'1px solid var('+meta.bg.replace('-bg','')+')',borderColor:'transparent',background:'var('+meta.bg+')'},
+            menuOpen: s.openStatusRow===r.id,
+            onToggleMenu:(e)=>this.toggleMenu(r.id,e),
+            onInc:()=>this.changeCount(r.id,1), onDec:()=>this.changeCount(r.id,-1), onDelete:()=>this.deleteRow(r.id),
+          };
+        });
+      }
+    }
+
+    // SETTINGS
+    out.itemsView=s.items.map(it=>({
+      name:it.name, locked:!!it.locked, typeLabel:it.type==='select'?'選択肢':'値',
+      detailLabel: it.type==='select'?(it.options||[]).join(' / '):(it.min+'〜'+it.max+' / '+it.step+'刻み'+(it.unit?(' / '+it.unit):'')),
+      onEdit:()=>this.openEditItem(it.id), onDelete: it.locked?(()=>{}):(()=>this.deleteItem(it.id)),
+      delIconStyle: it.locked?{width:30,height:30,display:'inline-flex',alignItems:'center',justifyContent:'center',border:'none',borderRadius:7,background:'transparent',color:'var(--ink-tertiary)',opacity:0.35,cursor:'not-allowed'}:{width:30,height:30,display:'inline-flex',alignItems:'center',justifyContent:'center',border:'none',borderRadius:7,background:'transparent',color:'var(--ink-subtle)',cursor:'pointer'},
+      delIconHover: it.locked?{}:{background:'var(--st-check-bg)',color:'#e5534b'},
+    }));
+    out.iconBtn={width:30,height:30,display:'inline-flex',alignItems:'center',justifyContent:'center',border:'none',borderRadius:7,background:'transparent',color:'var(--ink-subtle)',cursor:'pointer'};
+    out.iconBtnHover={background:'var(--surface-2)',color:'var(--ink)'};
+    out.editIcon=this.ic('edit',15); out.trashIcon=this.ic('trash',15);
+
+    // TOPBAR
+    out.showTopbar = s.view!=='create';
+    out.topbarIconColor='color:var(--ink-subtle);';
+    const crumbLast={fontSize:'15px',fontWeight:600,color:'var(--ink)',letterSpacing:'-0.02em',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0,flex:'0 1 auto'};
+    const crumbLink={fontSize:'13px',fontWeight:500,color:'var(--ink-subtle)',cursor:'pointer',whiteSpace:'nowrap',flex:'0 0 auto'};
+    if(s.view==='list'){ out.topbarIcon=this.ic('list',18); out.crumbs=[{label:'データ取り要項',style:crumbLast,chevron:false}]; out.hasTopbarAction=false; }
+    else if(s.view==='settings'){ out.topbarIcon=this.ic('gear',18); out.crumbs=[{label:'設定',style:crumbLast,chevron:false}]; out.hasTopbarAction=true; out.topbarAction=this.openAddItem; out.topbarActionLabel='条件項目を追加'; out.topbarActionIcon=this.ic('plus',15,2); }
+    else if(s.view==='plan'){ const pl=this.curPlan(); out.topbarIcon=this.ic('doc',18); out.crumbs=[{label:'データ取り要項',style:crumbLink,chevron:false,onClick:()=>this.go('list')},{label:pl?pl.name:'',style:crumbLast,chevron:true}]; out.hasTopbarAction=false; }
+    else { out.crumbs=[]; out.hasTopbarAction=false; }
+
+    // STATUS MENU (fixed overlay)
+    out.statusMenuOpen=false; out.closeStatusMenu=this.closeStatusMenu; out.checkIcon=this.ic('check',14,2.2);
+    if(s.openStatusRow && s.menuPos){
+      const pl=this.curPlan(); const row=pl && pl.rows.find(r=>r.id===s.openStatusRow);
+      if(row){
+        out.statusMenuOpen=true;
+        out.statusMenuStyle={position:'fixed',top:s.menuPos.top+'px',right:s.menuPos.right+'px',zIndex:41,minWidth:'150px',background:'var(--surface-1)',border:'1px solid var(--hairline-strong)',borderRadius:'9px',boxShadow:'0 12px 32px var(--overlay)',padding:'4px'};
+        out.statusMenuOptions=['todo','done','check'].map(k=>({label:sm[k].label,glyph:this.statusGlyph(k,15),active:row.status===k,onClick:()=>this.setStatus(s.openStatusRow,k),style:{display:'flex',alignItems:'center',gap:9,width:'100%',padding:'8px 10px',borderRadius:6,border:'none',background:'transparent',cursor:'pointer',fontSize:13,color:'var(--ink)'}}));
+      }
+    }
+
+    // MODAL
+    out.modalOpen=!!s.itemModal; out.closeModal=this.closeModal;
+    if(s.itemModal){ const m=s.itemModal, d=m.data;
+      out.modalTitle=m.mode==='add'?'条件項目を追加':'条件項目を編集';
+      out.modalName=d.name; out.onModalName=(e)=>this.setModalData({name:e.target.value});
+      out.modalIsSelect=d.type==='select'; out.modalIsValue=d.type==='value';
+      out.setTypeSelect=()=>this.setModalData({type:'select'}); out.setTypeValue=()=>this.setModalData({type:'value'});
+      const tb=(on)=>({flex:1,padding:'9px 0',borderRadius:8,cursor:'pointer',fontSize:14,fontWeight:600,border:on?'1px solid var(--primary)':'1px solid var(--hairline-strong)',background:on?'rgba(94,106,210,0.14)':'var(--surface-1)',color:on?'var(--primary)':'var(--ink-muted)'});
+      out.typeSelectStyle=tb(d.type==='select'); out.typeValueStyle=tb(d.type==='value');
+      out.modalOptions=d.options.map((o,i)=>({value:o,onChange:(e)=>this.setModalOption(i,e.target.value),onRemove:()=>this.removeModalOption(i)}));
+      out.onAddOption=this.addModalOption;
+      out.modalMin=d.min; out.modalMax=d.max; out.modalStep=d.step; out.modalUnit=d.unit;
+      out.onModalMin=(e)=>this.setModalData({min:e.target.value}); out.onModalMax=(e)=>this.setModalData({max:e.target.value}); out.onModalStep=(e)=>this.setModalData({step:e.target.value}); out.onModalUnit=(e)=>this.setModalData({unit:e.target.value});
+      out.modalHasErr=!!m.err; out.modalErr=m.err; out.saveItem=this.saveItem;
+    }
+    return out;
+  }
+}
+</script>
+</body>
+</html>
