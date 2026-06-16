@@ -17,6 +17,12 @@
 /.next/
 /out/
 
+# local SQLite database (runtime data)
+/data/
+
+# Playwright MCP eval artifacts
+/.playwright-mcp/
+
 # production
 /build
 

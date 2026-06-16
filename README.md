@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CapturePlan — X線データ取り要項アプリ
 
-## Getting Started
+AI学習用データ取得におけるX線検査装置での撮像・収集作業を効率化するWebアプリケーション。
+データ取り要項の作成、撮像条件の組み合わせ表の自動生成、撮像進捗の管理、見積撮像時間の算出を、すべてアプリ画面上で完結させる。
 
-First, run the development server:
+要件は [`docs/requirements.md`](docs/requirements.md)、UI/UX は [`docs/design/`](docs/design) のプロトタイプに準拠する。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 主な機能
+
+- **アプリ設定** — 撮像条件項目（因子）をユーザー定義。「選択肢」形式と「値」形式の2種。投影枚数・露光時間は見積算出用の固定項目（削除不可）。
+- **データ取り要項の作成** — 3ステップウィザード（基本情報 → 条件・水準の選択 → 確認・生成）。因子と水準のデカルト積から条件組み合わせ表を自動生成。
+- **組み合わせ表** — 各行に撮像回数・見積撮像時間・ステータス（未着手／撮像済み／要確認）を持つ。行の並べ替え（ドラッグ）・列ソート・行削除に対応。
+- **進捗管理** — 撮像済み件数／全件数、進捗率、要確認件数、合計見積撮像時間をリアルタイム表示。
+- **複数人編集** — 同じ要項を複数人が閲覧・編集でき、約4秒間隔のポーリングで他ユーザーの更新を自動反映。
+- **ダーク／ライトテーマ** 切替（プロトタイプの Linear 風デザインを踏襲）。
+
+見積撮像時間の計算式：`見積撮像時間[秒] = 投影枚数 × 露光時間[ms] × 撮像回数 ÷ 1000`
+
+## アーキテクチャ
+
+| レイヤ | 技術 |
+|---|---|
+| フレームワーク | Next.js 16 (App Router, Turbopack) / React 19 |
+| 言語 | TypeScript |
+| スタイリング | テーマトークン（CSSカスタムプロパティ）＋インラインスタイル / Tailwind CSS v4 |
+| 永続化 | SQLite（Node 組み込み `node:sqlite`、ネイティブビルド不要） |
+| API | Route Handlers（`app/api/**`）による REST |
+
+```
+app/
+  page.tsx            ルート。クライアントアプリ <App/> を描画
+  layout.tsx          フォント・メタデータ
+  api/                REST エンドポイント (items / plans / rows)
+components/            画面・UIコンポーネント（プロトタイプUIを忠実に移植）
+lib/
+  types.ts            ドメイン型
+  theme.ts            ダーク/ライトのパレット・ステータス定義
+  calc.ts             見積・組み合わせ等の純粋関数
+  styles.ts           共通スタイル
+  useAppData.ts       取得・ポーリング・楽観的更新のクライアントフック
+  server/db.ts        SQLite スキーマ・シード・クエリ（サーバー専用）
+data/                 SQLite データベース（自動生成・gitignore）
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+初回起動時、DBが空ならプロトタイプ相当の条件項目7種とサンプル要項3件を自動投入する。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## セットアップ
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev      # http://localhost:3000
+```
 
-## Learn More
+本番起動：
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+npm run start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> Node.js 22 以上が必要（`node:sqlite` を使用）。社内ネットワーク内のサーバーで常駐稼働させる想定。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 評価
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+UI/UX の確認は Playwright MCP で各画面・各操作（要項作成、ステータス変更、ソート、複数人ポーリング同期など）を実機操作して検証する。
